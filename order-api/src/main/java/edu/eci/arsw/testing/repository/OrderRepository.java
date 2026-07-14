@@ -1,0 +1,10 @@
+package edu.eci.arsw.testing.repository;
+
+import edu.eci.arsw.testing.model.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+/**
+ * Spring Data JPA repository for {@link Order} entities.
+ */
+public interface OrderRepository extends JpaRepository<Order, String> {
+}
