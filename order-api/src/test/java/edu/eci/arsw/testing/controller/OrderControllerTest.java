@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -58,5 +59,18 @@ class OrderControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldFindOrderById() throws Exception {
+        when(service.findById("ORD-1")).thenReturn(
+                new OrderResponse("ORD-1", "CUS-01", 120000, "CREATED", Instant.now())
+        );
+
+        mockMvc.perform(get("/orders/ORD-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("ORD-1"))
+                .andExpect(jsonPath("$.customerId").value("CUS-01"))
+                .andExpect(jsonPath("$.status").value("CREATED"));
     }
 }
