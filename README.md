@@ -58,14 +58,16 @@ Pruebas-ARSW/
 ├── README.md                          # este archivo: teoría general + guía de ejecución
 ├── .github/workflows/                 # pipeline de CI (sección 10)
 │   └── arsw-testing-pipeline.yml
-└── order-api/                         # backend Spring Boot (Order API)
-    ├── pom.xml
-    ├── src/main/java/edu/eci/arsw/testing/...
-    └── src/test/java/edu/eci/arsw/testing/...
+├── order-api/                         # backend Spring Boot (Order API)
+│   ├── pom.xml
+│   ├── src/main/java/edu/eci/arsw/testing/...
+│   └── src/test/java/edu/eci/arsw/testing/...
+├── frontend-tests/                    # pruebas E2E con Playwright (sección 8)
+│   └── tests/orders.spec.js
+└── load-tests/                        # scripts de carga con k6 (sección 9)
+    ├── load-test.js
+    └── load-test-stages.js
 ```
-
-> Las carpetas `frontend-tests/` (Playwright, sección 8) y `load-tests/` (k6,
-> sección 9) se agregan en la rama de trabajo de esa parte del laboratorio.
 
 ## Order API — proyecto base (sección 4)
 
@@ -198,6 +200,87 @@ Testcontainers).
 > integración con `@SpringBootTest`, analizando rapidez, confianza y costo de
 > mantenimiento.
 
+## Sección 8 — Pruebas automáticas de frontend con Playwright
+
+Playwright automatiza un navegador real para validar flujos completos **desde la
+perspectiva del usuario** (end-to-end): abre la página, llena formularios, hace clic
+y verifica lo que queda en pantalla. Es la capa más lenta y costosa antes de las
+pruebas de carga, pero la que más se parece a lo que realmente hace un usuario.
+
+`frontend-tests/tests/orders.spec.js` contiene dos pruebas de ejemplo de la guía:
+
+- Verifica que la página principal cargue con un título esperado.
+- Simula crear un pedido llenando `customer-id` y `order-total`, haciendo clic en
+  `create-order`, y comprobando que `order-status` muestre `CREATED`.
+
+**Importante — esto todavía no es ejecutable tal cual:** el test apunta a
+`http://localhost:5173` (puerto típico de Vite) y a selectores `data-testid`, pero
+**este repositorio no tiene un frontend implementado** — la guía no pide construir
+uno, solo asume que existe. Por eso el reto final (sección 11) dice *"proponer o
+implementar"* una prueba E2E: proponerla ya cumple el objetivo de aprendizaje.
+
+Para que estos selectores funcionen alguna vez, los componentes del frontend
+deberían incluir atributos `data-testid` (evita depender de textos o estilos que
+cambian):
+
+```html
+<input data-testid="customer-id" />
+<input data-testid="order-total" />
+<button data-testid="create-order">Crear pedido</button>
+<div data-testid="order-status"></div>
+```
+
+No se corrió `npm init playwright@latest` (sección 8.1): es un scaffolding
+interactivo que descarga binarios de navegador (Chromium/Firefox/WebKit, varios
+cientos de MB). Cuando tengas un frontend real contra el cual probar:
+
+```bash
+cd frontend-tests
+npm init playwright@latest
+npx playwright test
+npx playwright show-report
+```
+
+> **Pendiente (Actividad 4 de la guía):** diseñar tres pruebas E2E — crear pedido
+> exitosamente, mostrar error si el total es inválido, y consultar un pedido por
+> id — indicando para cada una el flujo, los datos de entrada y el resultado
+> esperado.
+
+## Sección 9 — Pruebas de carga con k6
+
+Las pruebas de carga validan cómo se comporta el sistema bajo múltiples usuarios o
+solicitudes concurrentes: latencia, throughput, tasa de error y degradación. A
+diferencia de las capas anteriores, aquí sí importa **cuántas** peticiones se
+disparan y en cuánto tiempo, no solo si la respuesta es correcta.
+
+- `load-tests/load-test.js`: carga simple y constante — 10 *usuarios virtuales*
+  (`vus`) durante 30s, haciendo `GET /orders/ORD-1` y verificando `status 200` y
+  `< 500ms` de respuesta.
+- `load-tests/load-test-stages.js`: carga variable por *stages* (rampa de 0→10 en
+  20s, 10→30 en 30s, 30→0 en 20s) contra `POST /orders`, con **thresholds**: la
+  prueba falla si la tasa de error supera 5% o si el p95 de latencia supera 800ms.
+  `__VU` es el id del usuario virtual actual, usado para generar un `customerId`
+  distinto por usuario.
+
+Para ejecutar, con la `order-api` corriendo en `localhost:8080`
+(`mvn spring-boot:run` desde `order-api/`):
+
+```bash
+# instalar (elegir según el SO)
+winget install k6            # Windows
+brew install k6               # macOS
+docker run --rm -i grafana/k6 run - < load-test.js   # Docker, sin instalar nada
+
+# ejecutar
+cd load-tests
+k6 run load-test.js
+k6 run load-test-stages.js
+```
+
+> **Pendiente (Actividad 5 de la guía):** ejecutar una prueba de carga con k6 y
+> documentar usuarios virtuales, duración, total de solicitudes, porcentaje de
+> fallos, p95 de latencia, resultado de los thresholds y una conclusión técnica.
+
 ## Sección 10 — Estrategia de pruebas en CI/CD
 
 No todas las pruebas deben correr en cada commit: las rápidas (unitarias, API) sí;
@@ -222,7 +305,7 @@ sección de trabajo de una sola persona), por eso vive directamente en `develop`
 - [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (código base; falta Actividad 1)
 - [x] Sección 6 — Pruebas de API con MockMvc (código base; falta Actividad 2)
 - [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (falta Actividad 3)
+- [x] Sección 8 — Prueba E2E de ejemplo con Playwright (código base; falta Actividad 4; frontend real no implementado)
+- [x] Sección 9 — Scripts de carga con k6 (código base; falta Actividad 5: ejecutar y analizar)
 - [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
-- [ ] Sección 8 — Pruebas E2E de frontend con Playwright (rama de esa parte del laboratorio)
-- [ ] Sección 9 — Pruebas de carga con k6 (rama de esa parte del laboratorio)
 - [ ] Sección 11 — Actividad integradora y reto final
