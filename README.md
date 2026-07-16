@@ -55,14 +55,17 @@ controlados.
 
 ```
 Pruebas-ARSW/
-├── README.md              # este archivo: teoría general + guía de ejecución
-├── order-api/              # backend Spring Boot (Order API)
-│   ├── pom.xml
-│   ├── src/main/java/edu/eci/arsw/testing/...
-│   └── src/test/java/edu/eci/arsw/testing/...
-├── frontend-tests/         # pruebas E2E con Playwright (sección 8, pendiente)
-└── load-tests/             # scripts de carga con k6 (sección 9, pendiente)
+├── README.md                          # este archivo: teoría general + guía de ejecución
+├── .github/workflows/                 # pipeline de CI (sección 10)
+│   └── arsw-testing-pipeline.yml
+└── order-api/                         # backend Spring Boot (Order API)
+    ├── pom.xml
+    ├── src/main/java/edu/eci/arsw/testing/...
+    └── src/test/java/edu/eci/arsw/testing/...
 ```
+
+> Las carpetas `frontend-tests/` (Playwright, sección 8) y `load-tests/` (k6,
+> sección 9) se agregan en la rama de trabajo de esa parte del laboratorio.
 
 ## Order API — proyecto base (sección 4)
 
@@ -195,13 +198,31 @@ Testcontainers).
 > integración con `@SpringBootTest`, analizando rapidez, confianza y costo de
 > mantenimiento.
 
+## Sección 10 — Estrategia de pruebas en CI/CD
+
+No todas las pruebas deben correr en cada commit: las rápidas (unitarias, API) sí;
+las costosas (integración completa, E2E, carga) se reservan para pull requests,
+releases o ambientes controlados.
+
+`.github/workflows/arsw-testing-pipeline.yml` implementa el job `backend-tests` de
+la guía: en cada `push` a `main` y en cada `pull_request`, hace checkout, instala
+Java 17 (Temurin) y corre `mvn test`.
+
+> **Ajuste sobre el snippet de la guía:** el `run: mvn test` original asume que el
+> `pom.xml` está en la raíz del repo. Aquí vive en `order-api/`, así que agregué
+> `working-directory: order-api` al step para que el pipeline realmente encuentre el
+> proyecto.
+
+Este pipeline es infraestructura compartida del laboratorio (no pertenece a la
+sección de trabajo de una sola persona), por eso vive directamente en `develop`.
+
 ## Progreso del laboratorio
 
 - [x] Sección 4 — Proyecto base Spring Boot
 - [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (código base; falta Actividad 1)
 - [x] Sección 6 — Pruebas de API con MockMvc (código base; falta Actividad 2)
 - [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (falta Actividad 3)
-- [ ] Sección 8 — Pruebas E2E de frontend con Playwright
-- [ ] Sección 9 — Pruebas de carga con k6
-- [ ] Sección 10 — Estrategia de pruebas en CI/CD
+- [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
+- [ ] Sección 8 — Pruebas E2E de frontend con Playwright (rama de esa parte del laboratorio)
+- [ ] Sección 9 — Pruebas de carga con k6 (rama de esa parte del laboratorio)
 - [ ] Sección 11 — Actividad integradora y reto final
