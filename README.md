@@ -1,79 +1,78 @@
-# Pruebas ARSW — Estrategia Integral de Pruebas
+# Pruebas ARSW — Comprehensive Testing Strategy
 
-Laboratorio de la asignatura *Arquitecturas de Software (ARSW)*. Construye una API de
-pedidos (`Order API`) en Spring Boot y le aplica, capa por capa, distintos tipos de
-pruebas: unitarias, de API, de integración, end-to-end de frontend y de carga,
-cerrando con una estrategia de ejecución en CI/CD.
+Lab for the *Software Architecture (ARSW)* course. It builds an order API
+(`Order API`) in Spring Boot and applies, layer by layer, different types of
+tests: unit, API, integration, frontend end-to-end and load testing, closing
+with a CI/CD execution strategy.
 
-Este README documenta la teoría general del laboratorio y se irá completando a medida
-que se avanza en cada sección.
+This README documents the lab's general theory and will keep growing as each
+section is completed.
 
-## Idea central
+## Central idea
 
-Probar no es solo verificar que una funcionalidad responde. Probar es construir
-**evidencia de calidad** sobre comportamiento, integración, rendimiento, experiencia
-de usuario y confiabilidad del sistema. Una buena estrategia de pruebas protege
-atributos de calidad como confiabilidad, mantenibilidad, rendimiento, seguridad,
-disponibilidad y capacidad de evolución.
+Testing is not just about checking that a feature responds. Testing is about
+building **quality evidence** about behavior, integration, performance, user
+experience and system reliability. A good testing strategy protects quality
+attributes such as reliability, maintainability, performance, security,
+availability and evolvability.
 
-## Estrategia de pruebas por capas
+## Layered testing strategy
 
 ```
-Pruebas unitarias
+Unit tests
       ↓
-Pruebas de API
+API tests
       ↓
-Pruebas de integración
+Integration tests
       ↓
-Pruebas end-to-end de frontend
+Frontend end-to-end tests
       ↓
-Pruebas de carga
+Load tests
       ↓
-Pipeline de validación (CI/CD)
+Validation pipeline (CI/CD)
 ```
 
-Cada capa tiene un propósito, un costo y un nivel de confianza distintos: entre más
-abajo en la pirámide, más rápida y barata es la prueba, pero menos "realista" es el
-escenario que valida; entre más arriba, más cara y lenta, pero más cerca del
-comportamiento real del sistema.
+Each layer has a different purpose, cost and confidence level: the lower in the
+pyramid, the faster and cheaper the test, but the less "realistic" the scenario
+it validates; the higher up, the more expensive and slower, but the closer to
+the system's real behavior.
 
-| Tipo de prueba | Qué valida | Herramientas |
+| Test type | What it validates | Tools |
 |---|---|---|
-| Unitaria | Lógica de una clase o función aislada | JUnit, Mockito |
-| API | Códigos HTTP, JSON, validaciones, contrato de endpoint | MockMvc, REST Assured |
-| Integración | Interacción entre servicio, repositorio y base de datos | `@SpringBootTest`, Testcontainers |
-| Frontend automática | Flujos críticos desde la perspectiva del usuario | Playwright, Cypress, Testing Library |
-| Carga | Comportamiento bajo múltiples usuarios/solicitudes concurrentes | k6, JMeter, Gatling |
-| Pipeline | Ejecución repetible para evitar regresiones | GitHub Actions, GitLab CI, Jenkins |
+| Unit | Logic of an isolated class or function | JUnit, Mockito |
+| API | HTTP status codes, JSON, validations, endpoint contract | MockMvc, REST Assured |
+| Integration | Interaction between service, repository and database | `@SpringBootTest`, Testcontainers |
+| Frontend automation | Critical flows from the user's perspective | Playwright, Cypress, Testing Library |
+| Load | Behavior under multiple concurrent users/requests | k6, JMeter, Gatling |
+| Pipeline | Repeatable execution to prevent regressions | GitHub Actions, GitLab CI, Jenkins |
 
-**Recomendación de la guía:** no todas las pruebas deben ejecutarse en cada commit.
-Las rápidas (unitarias, API) se ejecutan con frecuencia; las costosas (integración
-completa, E2E, carga) se reservan para pull requests, releases o ambientes
-controlados.
+**Guide recommendation:** not every test should run on every commit. Fast
+tests (unit, API) run frequently; expensive ones (full integration, E2E, load)
+are reserved for pull requests, releases or controlled environments.
 
-## Estructura del repositorio
+## Repository structure
 
 ```
 Pruebas-ARSW/
-├── README.md                          # este archivo: teoría general + guía de ejecución
-├── .github/workflows/                 # pipeline de CI (sección 10)
+├── README.md                          # this file: general theory + execution guide
+├── .github/workflows/                 # CI pipeline (section 10)
 │   └── arsw-testing-pipeline.yml
-└── order-api/                         # backend Spring Boot (Order API)
+└── order-api/                         # Spring Boot backend (Order API)
     ├── pom.xml
     ├── src/main/java/edu/eci/arsw/testing/...
     └── src/test/java/edu/eci/arsw/testing/...
 ```
 
-> Las carpetas `frontend-tests/` (Playwright, sección 8) y `load-tests/` (k6,
-> sección 9) se agregan en la rama de trabajo de esa parte del laboratorio.
+> The `frontend-tests/` (Playwright, section 8) and `load-tests/` (k6, section
+> 9) folders are added on the working branch for that part of the lab.
 
-## Order API — proyecto base (sección 4)
+## Order API — base project (section 4)
 
-API simple de pedidos, suficiente para aplicar los distintos tipos de pruebas sin
-construir una aplicación de comercio electrónico completa.
+A simple order API, just enough to apply the different types of tests without
+building a full e-commerce application.
 
 ```
-Cliente / Frontend
+Client / Frontend
       ↓
 Order API (Spring Boot)
       ↓
@@ -81,148 +80,152 @@ Order Service
       ↓
 Order Repository
       ↓
-Base de datos (H2 en memoria)
+Database (in-memory H2)
 ```
 
-**Stack:** Java 17+ (se usó Java 23 disponible localmente), Maven, Spring Boot 4.1.0,
-Spring Web (starter `webmvc` en Boot 4), Spring Data JPA, Validation, H2 Database,
-Spring Boot Test.
+**Stack:** Java 17+ (Java 23 was used locally), Maven, Spring Boot 4.1.0,
+Spring Web (`webmvc` starter in Boot 4), Spring Data JPA, Validation, H2
+Database, Spring Boot Test.
 
-> **Nota sobre Spring Boot 4:** a partir de Boot 4 los starters se modularizaron más
-> (p. ej. `spring-boot-starter-webmvc` en vez de `spring-boot-starter-web`, y starters
-> de test específicos por módulo como `spring-boot-starter-data-jpa-test`,
-> `spring-boot-starter-webmvc-test`). JUnit 5 y Mockito siguen llegando de forma
-> transitiva a través de esos starters de test, igual que antes con
-> `spring-boot-starter-test`.
+> **Note on Spring Boot 4:** starting with Boot 4, starters were split into
+> smaller modules (e.g. `spring-boot-starter-webmvc` instead of
+> `spring-boot-starter-web`, and module-specific test starters such as
+> `spring-boot-starter-data-jpa-test`, `spring-boot-starter-webmvc-test`).
+> JUnit 5 and Mockito still arrive transitively through those test starters,
+> just as they used to via `spring-boot-starter-test`.
 
-### Paquetes
+### Packages
 
-- `model` — entidad JPA `Order`.
-- `dto` — `CreateOrderRequest` (entrada, con validaciones `@NotBlank`/`@Min`) y
-  `OrderResponse` (salida).
-- `repository` — `OrderRepository`, extiende `JpaRepository<Order, String>`.
-- `service` — `OrderService`, regla de negocio: rechaza pedidos con `total > 5.000.000`.
-- `controller` — `OrderController`, expone `POST /orders` y `GET /orders/{id}`.
+- `model` — JPA entity `Order`.
+- `dto` — `CreateOrderRequest` (input, with `@NotBlank`/`@Min` validations) and
+  `OrderResponse` (output).
+- `repository` — `OrderRepository`, extends `JpaRepository<Order, String>`.
+- `service` — `OrderService`, business rule: rejects orders with
+  `total > 5,000,000`.
+- `controller` — `OrderController`, exposes `POST /orders` and
+  `GET /orders/{id}`.
 
-### Cómo ejecutar
+### How to run
 
-Desde `order-api/`:
+From `order-api/`:
 
 ```bash
-# compilar
+# compile
 mvn compile
 
-# ejecutar la aplicación (por defecto en el puerto 8080)
+# run the application (port 8080 by default)
 mvn spring-boot:run
 
-# ejecutar las pruebas
+# run the tests
 mvn test
 ```
 
 ### Endpoints
 
-| Método | Ruta | Descripción |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/orders` | Crea un pedido. Body: `{ "customerId": "...", "total": 120000 }` |
-| `GET` | `/orders/{id}` | Consulta un pedido por id |
+| `POST` | `/orders` | Creates an order. Body: `{ "customerId": "...", "total": 120000 }` |
+| `GET` | `/orders/{id}` | Retrieves an order by id |
 
-## Sección 5 — Pruebas unitarias con JUnit y Mockito
+## Section 5 — Unit tests with JUnit and Mockito
 
-`OrderServiceTest` prueba `OrderService` **aislado**, simulando `OrderRepository` con
-Mockito (`mock(OrderRepository.class)`). No se levanta contexto de Spring: es la
-prueba más rápida y barata de la pirámide.
+`OrderServiceTest` tests `OrderService` **in isolation**, mocking
+`OrderRepository` with Mockito (`mock(OrderRepository.class)`). No Spring
+context is started: this is the fastest, cheapest test in the pyramid.
 
-- `shouldCreateOrderWhenRequestIsValid`: configura `repository.save(...)` con
-  `when(...).thenReturn(...)` y valida que la respuesta tenga los datos esperados, y
-  que `save` se haya invocado exactamente una vez (`verify(repository, times(1))`).
-- `shouldRejectOrderWhenTotalExceedsLimit`: valida con `assertThrows` que un total
-  mayor a 5.000.000 lanza `IllegalArgumentException`, y que `save` **nunca** se llama
-  (`verify(repository, never())`) — confirma que la regla de negocio corta el flujo
-  antes de tocar el repositorio.
+- `shouldCreateOrderWhenRequestIsValid`: configures `repository.save(...)`
+  with `when(...).thenReturn(...)` and validates that the response has the
+  expected data, and that `save` was invoked exactly once
+  (`verify(repository, times(1))`).
+- `shouldRejectOrderWhenTotalExceedsLimit`: uses `assertThrows` to validate
+  that a total above 5,000,000 throws `IllegalArgumentException`, and that
+  `save` is **never** called (`verify(repository, never())`) — confirming the
+  business rule short-circuits the flow before touching the repository.
 
-Ejecutar solo esta clase: `mvn -Dtest=OrderServiceTest test`
+Run only this class: `mvn -Dtest=OrderServiceTest test`
 
-> **Pendiente (Actividad 1 de la guía):** agregar pruebas para `findById` — una que
-> retorne un pedido existente y otra que lance excepción cuando el pedido no existe.
+> **Pending (guide Activity 1):** add tests for `findById` — one that returns
+> an existing order and another that throws an exception when the order does
+> not exist.
 
-## Sección 6 — Pruebas de API con MockMvc
+## Section 6 — API tests with MockMvc
 
-`OrderControllerTest` prueba la capa web de forma aislada con `@WebMvcTest(OrderController.class)`:
-Spring solo levanta el `OrderController` y el `MockMvc` asociado, **sin** base de
-datos ni el resto del contexto. La dependencia `OrderService` se reemplaza con
-`@MockitoBean`.
+`OrderControllerTest` tests the web layer in isolation with
+`@WebMvcTest(OrderController.class)`: Spring only starts `OrderController` and
+its associated `MockMvc`, **without** a database or the rest of the context.
+The `OrderService` dependency is replaced with `@MockitoBean`.
 
-- `shouldCreateOrder`: hace `POST /orders` con un JSON válido y valida `201 Created`
-  más el cuerpo de la respuesta con `jsonPath`.
-- `shouldRejectInvalidRequest`: envía `customerId` vacío y `total` negativo; como el
-  DTO usa `@NotBlank`/`@Min(1)` y el controlador tiene `@Valid`, Spring responde
-  `400 Bad Request` automáticamente, sin que el código del controlador tenga que
-  validarlo a mano.
+- `shouldCreateOrder`: performs `POST /orders` with a valid JSON body and
+  validates `201 Created` plus the response body via `jsonPath`.
+- `shouldRejectInvalidRequest`: sends an empty `customerId` and a negative
+  `total`; since the DTO uses `@NotBlank`/`@Min(1)` and the controller has
+  `@Valid`, Spring responds `400 Bad Request` automatically, without the
+  controller code having to validate it manually.
 
-> **Nota Spring Boot 4:** `@WebMvcTest` se movió de paquete respecto a Boot 3 —
-> ahora es `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest` en vez de
-> `org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest`. El resto de
-> clases de MockMvc (`MockMvc`, `MockMvcRequestBuilders`, `MockMvcResultMatchers`)
-> siguen en Spring Framework (`org.springframework.test.web.servlet.*`) y no
-> cambiaron.
+> **Spring Boot 4 note:** `@WebMvcTest` moved packages compared to Boot 3 — it
+> is now `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`
+> instead of `org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest`.
+> The rest of the MockMvc classes (`MockMvc`, `MockMvcRequestBuilders`,
+> `MockMvcResultMatchers`) remain in Spring Framework
+> (`org.springframework.test.web.servlet.*`) and did not change.
 
-Ejecutar solo esta clase: `mvn -Dtest=OrderControllerTest test`
+Run only this class: `mvn -Dtest=OrderControllerTest test`
 
-> **Pendiente (Actividad 2 de la guía):** agregar una prueba para `GET /orders/{id}`
-> que valide `200 OK`, el `id`, `customerId` y `status` del pedido.
+> **Pending (guide Activity 2):** add a test for `GET /orders/{id}` that
+> validates `200 OK`, the order's `id`, `customerId` and `status`.
 
-## Sección 7 — Pruebas de integración
+## Section 7 — Integration tests
 
-`OrderIntegrationTest` usa `@SpringBootTest`, que levanta el contexto **completo** de
-Spring (servicio real + repositorio real + base de datos H2 en memoria real, sin
-mocks). `shouldCreateAndFindOrder` crea un pedido a través del `OrderService` real y
-luego lo busca por id, verificando que ambos objetos coincidan. Es la prueba más
-lenta y costosa de las tres, pero la que da mayor confianza porque ejercita la
-interacción real entre las capas.
+`OrderIntegrationTest` uses `@SpringBootTest`, which starts the **full**
+Spring context (real service + real repository + real in-memory H2 database,
+no mocks). `shouldCreateAndFindOrder` creates an order through the real
+`OrderService` and then looks it up by id, verifying both objects match. It's
+the slowest and most expensive test of the three, but the one that gives the
+most confidence because it exercises the real interaction between layers.
 
-Ejecutar solo esta clase: `mvn -Dtest=OrderIntegrationTest test`
+Run only this class: `mvn -Dtest=OrderIntegrationTest test`
 
-### 7.1 Testcontainers (dependencias)
+### 7.1 Testcontainers (dependencies)
 
-Se agregaron al `pom.xml` las dependencias `org.testcontainers:junit-jupiter` y
-`org.testcontainers:postgresql` (scope `test`), más el `testcontainers-bom` en
-`dependencyManagement` para fijar la versión (`1.21.3`) — el snippet de la guía no
-incluye el BOM, así que sin él Maven no puede resolver la versión de esas
-dependencias. Por ahora `OrderIntegrationTest` sigue usando el H2 en memoria por
-defecto; usar un contenedor real de PostgreSQL en el test quedaría como una extensión
-futura (reemplazar el `DataSource` por uno respaldado por un contenedor de
-Testcontainers).
+Added to `pom.xml`: the `org.testcontainers:junit-jupiter` and
+`org.testcontainers:postgresql` dependencies (`test` scope), plus the
+`testcontainers-bom` in `dependencyManagement` to pin the version (`1.21.3`) —
+the guide's snippet doesn't include the BOM, so without it Maven can't resolve
+those dependencies' version. For now `OrderIntegrationTest` still uses the
+default in-memory H2; using a real PostgreSQL container in the test would be a
+future extension (replacing the `DataSource` with one backed by a
+Testcontainers container).
 
-> **Pendiente (Actividad 3 de la guía):** explicar la diferencia entre la prueba
-> unitaria del servicio, la prueba del controlador con MockMvc y la prueba de
-> integración con `@SpringBootTest`, analizando rapidez, confianza y costo de
-> mantenimiento.
+> **Pending (guide Activity 3):** explain the difference between the
+> service's unit test, the controller's MockMvc test, and the integration
+> test with `@SpringBootTest`, analyzing speed, confidence and maintenance
+> cost.
 
-## Sección 10 — Estrategia de pruebas en CI/CD
+## Section 10 — Testing strategy in CI/CD
 
-No todas las pruebas deben correr en cada commit: las rápidas (unitarias, API) sí;
-las costosas (integración completa, E2E, carga) se reservan para pull requests,
-releases o ambientes controlados.
+Not every test should run on every commit: fast ones (unit, API) should;
+expensive ones (full integration, E2E, load) are reserved for pull requests,
+releases or controlled environments.
 
-`.github/workflows/arsw-testing-pipeline.yml` implementa el job `backend-tests` de
-la guía: en cada `push` a `main` y en cada `pull_request`, hace checkout, instala
-Java 17 (Temurin) y corre `mvn test`.
+`.github/workflows/arsw-testing-pipeline.yml` implements the guide's
+`backend-tests` job: on every `push` to `main` and every `pull_request`, it
+checks out the code, installs Java 17 (Temurin) and runs `mvn test`.
 
-> **Ajuste sobre el snippet de la guía:** el `run: mvn test` original asume que el
-> `pom.xml` está en la raíz del repo. Aquí vive en `order-api/`, así que agregué
-> `working-directory: order-api` al step para que el pipeline realmente encuentre el
-> proyecto.
+> **Adjustment to the guide's snippet:** the original `run: mvn test` assumes
+> `pom.xml` is at the repo root. Here it lives in `order-api/`, so
+> `working-directory: order-api` was added to the step so the pipeline
+> actually finds the project.
 
-Este pipeline es infraestructura compartida del laboratorio (no pertenece a la
-sección de trabajo de una sola persona), por eso vive directamente en `develop`.
+This pipeline is shared lab infrastructure (it doesn't belong to a single
+person's section of work), which is why it lives directly on `develop`.
 
-## Progreso del laboratorio
+## Lab progress
 
-- [x] Sección 4 — Proyecto base Spring Boot
-- [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (código base; falta Actividad 1)
-- [x] Sección 6 — Pruebas de API con MockMvc (código base; falta Actividad 2)
-- [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (falta Actividad 3)
-- [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
-- [ ] Sección 8 — Pruebas E2E de frontend con Playwright (rama de esa parte del laboratorio)
-- [ ] Sección 9 — Pruebas de carga con k6 (rama de esa parte del laboratorio)
-- [ ] Sección 11 — Actividad integradora y reto final
+- [x] Section 4 — Base Spring Boot project
+- [x] Section 5 — Unit tests with JUnit and Mockito (base code; Activity 1 pending)
+- [x] Section 6 — API tests with MockMvc (base code; Activity 2 pending)
+- [x] Section 7 — Integration tests + Testcontainers dependencies (Activity 3 pending)
+- [x] Section 10 — GitHub Actions pipeline for backend tests
+- [ ] Section 8 — Frontend E2E tests with Playwright (on that part's working branch)
+- [ ] Section 9 — Load tests with k6 (on that part's working branch)
+- [ ] Section 11 — Integrative activity and final challenge
