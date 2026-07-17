@@ -19,6 +19,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * MockMvc tests for {@link OrderController}, with {@link OrderService} mocked out.
+ */
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
 
@@ -28,6 +31,9 @@ class OrderControllerTest {
     @MockitoBean
     private OrderService service;
 
+    /**
+     * Verifies that a valid POST request creates an order and returns 201 with its data.
+     */
     @Test
     void shouldCreateOrder() throws Exception {
         when(service.createOrder(any())).thenReturn(
@@ -48,6 +54,9 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.status").value("CREATED"));
     }
 
+    /**
+     * Verifies that an invalid request body is rejected with 400 by bean validation.
+     */
     @Test
     void shouldRejectInvalidRequest() throws Exception {
         mockMvc.perform(post("/orders")
@@ -61,6 +70,9 @@ class OrderControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /**
+     * Verifies that GET /orders/{id} returns 200 with the order's data.
+     */
     @Test
     void shouldFindOrderById() throws Exception {
         when(service.findById("ORD-1")).thenReturn(
