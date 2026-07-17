@@ -399,7 +399,15 @@ that the lab never needed because the Order API has no authentication.
 | Load | k6 against staging (not local) | Behavior under real concurrency: catalog, checkout, payment gateway | Before release, in a controlled environment | Bottlenecks, timeouts, database degradation under load | k6 report (p95, error rate, throughput), dashboards |
 | Pipeline / CD | GitHub Actions + AWS deployment (ECS/CodeDeploy) | That build → test → deploy works without manual intervention | Every push/PR and before every release | Regressions not caught before production, broken deployments | Run history, status badges, artifacts |
 
-### Point 20 — Proposed testing pipeline
+### 11.2 Final challenge
+
+Points 13 through 19 of the final challenge are already covered in earlier sections:
+the unit test (13, section 5), the MockMvc API test (14, section 6), the integration
+test (15, section 7), the proposed E2E test (16, section 8), the k6 scripts (17,
+section 9), and running them with evidence plus the load metrics analysis (18 and 19,
+section 9 — Activity 5). Points 20 and 21 remain.
+
+#### Point 20 — Proposed testing pipeline
 
 Extends section 10's table to cover every layer from the integrative activity:
 
@@ -433,7 +441,7 @@ risk it mitigates — running the full Playwright suite on every commit would be
 too slow for fast developer feedback, but skipping it before a release would let
 regressions in critical flows like checkout slip through.
 
-### Point 21 — Reflection: which tests add the most value?
+#### Point 21 — Reflection: which tests add the most value?
 
 There's no single answer — it depends on the cost of a bug reaching production
 in that part of the system. Based on the evidence generated in this lab:
