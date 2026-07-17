@@ -140,10 +140,15 @@ prueba más rápida y barata de la pirámide.
   (`verify(repository, never())`) — confirma que la regla de negocio corta el flujo
   antes de tocar el repositorio.
 
-Ejecutar solo esta clase: `mvn -Dtest=OrderServiceTest test`
+- `shouldReturnOrderWhenIdExists` (Actividad 1): simula `repository.findById("ORD-1")`
+  devolviendo `Optional.of(order)` y valida que `OrderResponse` tenga los mismos
+  datos que la entidad simulada.
+- `shouldThrowExceptionWhenOrderNotFound` (Actividad 1): simula
+  `repository.findById(...)` devolviendo `Optional.empty()` y valida con
+  `assertThrows` que `findById` lanza `IllegalArgumentException` — cubre la rama del
+  `orElseThrow` que sí se ejecuta.
 
-> **Pendiente (Actividad 1 de la guía):** agregar pruebas para `findById` — una que
-> retorne un pedido existente y otra que lance excepción cuando el pedido no existe.
+Ejecutar solo esta clase: `mvn -Dtest=OrderServiceTest test`
 
 ## Sección 6 — Pruebas de API con MockMvc
 
@@ -166,10 +171,11 @@ datos ni el resto del contexto. La dependencia `OrderService` se reemplaza con
 > siguen en Spring Framework (`org.springframework.test.web.servlet.*`) y no
 > cambiaron.
 
-Ejecutar solo esta clase: `mvn -Dtest=OrderControllerTest test`
+- `shouldFindOrderById` (Actividad 2): mockea `service.findById("ORD-1")` y hace
+  `GET /orders/ORD-1`, validando `200 OK` y el `id`, `customerId` y `status` en el
+  cuerpo de la respuesta.
 
-> **Pendiente (Actividad 2 de la guía):** agregar una prueba para `GET /orders/{id}`
-> que valide `200 OK`, el `id`, `customerId` y `status` del pedido.
+Ejecutar solo esta clase: `mvn -Dtest=OrderControllerTest test`
 
 ## Sección 7 — Pruebas de integración
 
@@ -193,10 +199,16 @@ defecto; usar un contenedor real de PostgreSQL en el test quedaría como una ext
 futura (reemplazar el `DataSource` por uno respaldado por un contenedor de
 Testcontainers).
 
-> **Pendiente (Actividad 3 de la guía):** explicar la diferencia entre la prueba
-> unitaria del servicio, la prueba del controlador con MockMvc y la prueba de
-> integración con `@SpringBootTest`, analizando rapidez, confianza y costo de
-> mantenimiento.
+### Actividad 3 — Unitaria vs. MockMvc vs. Integración
+
+| | Unitaria (`OrderServiceTest`) | API/MockMvc (`OrderControllerTest`) | Integración (`OrderIntegrationTest`) |
+|---|---|---|---|
+| **Qué levanta** | Nada de Spring; solo el objeto `OrderService` con un mock de `OrderRepository` | Solo la capa web (`@WebMvcTest`): el `DispatcherServlet`, el `OrderController` y la serialización JSON, con `OrderService` mockeado | El contexto completo de Spring: controlador, servicio, repositorio y base de datos H2 real |
+| **Rapidez** | La más rápida (ms) — no hay arranque de contexto ni I/O | Intermedia — arranca un contexto parcial de Spring, más lenta que la unitaria pero mucho más liviana que una completa | La más lenta — arranca todo el contexto, configura JPA/Hibernate y una conexión real a base de datos |
+| **Confianza** | Baja/media — prueba la lógica de negocio en aislamiento, pero no garantiza que el controlador, la serialización o el repositorio realmente funcionen juntos | Media — garantiza que las rutas, códigos HTTP, validaciones (`@Valid`) y el JSON de entrada/salida son correctos, pero el `OrderService` sigue siendo falso | Alta — es la única que demuestra que las piezas reales (servicio + repositorio + JPA + base de datos) efectivamente se integran y producen el resultado esperado |
+| **Costo de mantenimiento** | Bajo — al mockear la única dependencia, cambios en la base de datos o en Spring no rompen este test; solo se rompe si cambia el contrato de `OrderService`/`OrderRepository` | Medio — puede romperse por cambios en rutas, DTOs o reglas de validación, aunque no depende de la base de datos | Alto — más frágil ante cambios de configuración (propiedades de datasource, mapeo JPA, versión de Spring Boot), y más costosa de depurar cuando falla porque hay más piezas en juego |
+
+**Conclusión:** ninguna reemplaza a la otra — cada una detecta un tipo de error distinto (lógica de negocio vs. contrato HTTP vs. integración real), por eso la guía las organiza como una pirámide: muchas unitarias baratas en la base, menos pruebas de integración caras en la cima. Un cambio ideal se valida primero con la unitaria (feedback inmediato) y se confirma con la de integración antes de hacer merge.
 
 ## Sección 10 — Estrategia de pruebas en CI/CD
 
@@ -219,9 +231,9 @@ sección de trabajo de una sola persona), por eso vive directamente en `develop`
 ## Progreso del laboratorio
 
 - [x] Sección 4 — Proyecto base Spring Boot
-- [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (código base; falta Actividad 1)
-- [x] Sección 6 — Pruebas de API con MockMvc (código base; falta Actividad 2)
-- [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (falta Actividad 3)
+- [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (incluye Actividad 1)
+- [x] Sección 6 — Pruebas de API con MockMvc (incluye Actividad 2)
+- [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (incluye Actividad 3)
 - [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
 - [ ] Sección 8 — Pruebas E2E de frontend con Playwright (rama de esa parte del laboratorio)
 - [ ] Sección 9 — Pruebas de carga con k6 (rama de esa parte del laboratorio)
