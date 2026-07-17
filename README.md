@@ -393,7 +393,15 @@ que el laboratorio no necesitó porque el Order API no tiene autenticación.
 | Carga | k6 contra staging (no contra local) | Comportamiento bajo concurrencia real: catálogo, checkout, pasarela de pago | Antes de release, en ambiente controlado | Cuellos de botella, timeouts, degradación de la base de datos bajo carga | Reporte k6 (p95, error rate, throughput), dashboards |
 | Pipeline / CD | GitHub Actions + despliegue en AWS (ECS/CodeDeploy) | Que build → test → deploy funcione sin intervención manual | Cada push/PR y antes de cada release | Regresiones no detectadas antes de producción, despliegues rotos | Historial de ejecuciones, badges de estado, artefactos |
 
-### Punto 20 — Pipeline de pruebas propuesto
+### 11.2 Reto final
+
+Los puntos 13 a 19 del reto final ya quedaron cubiertos en secciones anteriores: la
+prueba unitaria (13, sección 5), la prueba de API con MockMvc (14, sección 6), la
+prueba de integración (15, sección 7), la propuesta de prueba E2E (16, sección 8), los
+scripts k6 (17, sección 9), y la ejecución con evidencia y el análisis de métricas de
+carga (18 y 19, sección 9 — Actividad 5). Faltan los puntos 20 y 21.
+
+#### Punto 20 — Pipeline de pruebas propuesto
 
 Extiende la tabla de la sección 10, cubriendo todas las capas de la actividad
 integradora:
@@ -428,7 +436,7 @@ correr Playwright completo en cada commit sería demasiado lento para dar feedba
 rápido al desarrollador, pero omitirlo antes de un release dejaría pasar regresiones
 de flujos críticos como el checkout.
 
-### Punto 21 — Reflexión: ¿qué pruebas aportan más valor?
+#### Punto 21 — Reflexión: ¿qué pruebas aportan más valor?
 
 No hay una respuesta única — depende del costo de que un error llegue a producción en
 esa parte del sistema. Con la evidencia que generamos en este laboratorio:
