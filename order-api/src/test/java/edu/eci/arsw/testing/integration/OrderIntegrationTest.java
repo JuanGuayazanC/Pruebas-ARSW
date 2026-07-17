@@ -9,12 +9,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests that exercise the full Spring context: controller, service,
+ * repository and the in-memory H2 database, with no mocks.
+ */
 @SpringBootTest
 class OrderIntegrationTest {
 
     @Autowired
     private OrderService service;
 
+    /**
+     * Verifies that an order created through the real service can be found by id.
+     */
     @Test
     void shouldCreateAndFindOrder() {
         CreateOrderRequest request = new CreateOrderRequest("CUS-99", 250000);

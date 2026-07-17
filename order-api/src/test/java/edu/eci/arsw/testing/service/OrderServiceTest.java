@@ -13,8 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link OrderService}, with {@link OrderRepository} mocked out.
+ */
 class OrderServiceTest {
 
+    /**
+     * Verifies that a valid request is persisted and mapped into the response DTO.
+     */
     @Test
     void shouldCreateOrderWhenRequestIsValid() {
         OrderRepository repository = mock(OrderRepository.class);
@@ -34,6 +40,9 @@ class OrderServiceTest {
         verify(repository, times(1)).save(any(Order.class));
     }
 
+    /**
+     * Verifies that a total above the allowed limit is rejected before touching the repository.
+     */
     @Test
     void shouldRejectOrderWhenTotalExceedsLimit() {
         OrderRepository repository = mock(OrderRepository.class);
@@ -45,6 +54,9 @@ class OrderServiceTest {
         verify(repository, never()).save(any(Order.class));
     }
 
+    /**
+     * Verifies that an existing order is mapped into the response DTO when found.
+     */
     @Test
     void shouldReturnOrderWhenIdExists() {
         OrderRepository repository = mock(OrderRepository.class);
@@ -62,6 +74,9 @@ class OrderServiceTest {
         assertEquals("CREATED", response.status());
     }
 
+    /**
+     * Verifies that looking up a non-existent order throws {@link IllegalArgumentException}.
+     */
     @Test
     void shouldThrowExceptionWhenOrderNotFound() {
         OrderRepository repository = mock(OrderRepository.class);
