@@ -8,6 +8,15 @@ with a CI/CD execution strategy.
 This README documents the lab's general theory and will keep growing as each
 section is completed.
 
+## Author
+
+JUAN SEBASTIÁN GUAYAZÁN CLAVIJO  
+Software Architectures (ISIS ARSW - 101)  
+Dean's Office of Systems Engineering  
+Systems Engineering  
+Colombian School of Engineering Julio Garavito  
+2026-i
+
 ## Central idea
 
 Testing is not just about checking that a feature responds. Testing is about
