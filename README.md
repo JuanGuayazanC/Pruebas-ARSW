@@ -375,6 +375,89 @@ checks out the code, installs Java 17 (Temurin) and runs `mvn test`.
 This pipeline is shared lab infrastructure (it doesn't belong to a single
 person's section of work), which is why it lives directly on `develop`.
 
+## Section 11 — Integrative activity and final challenge
+
+### 11.1 Integrative activity: testing strategy for an e-commerce app
+
+Scenario: React frontend, Spring Boot backend, PostgreSQL database, REST API,
+authentication and AWS deployment. Unlike the lab's Order API (in-memory H2, no
+authentication, no real frontend or deployment), this scenario adds three new
+sources of risk: a real database with its own behavior, a security perimeter to
+protect, and a frontend/infrastructure that actually gets deployed. That's
+exactly what changes the most in the testing pyramid: the **integration** layer
+(H2 is no longer enough — testing against real Postgres with Testcontainers,
+including migrations, becomes necessary) and a new **security** layer appears
+that the lab never needed because the Order API has no authentication.
+
+| Test type | Tools | Layer it validates | Pipeline stage | Errors it detects | Evidence it generates |
+|---|---|---|---|---|---|
+| Unit | JUnit 5 + Mockito (backend); Vitest/Jest + Testing Library (frontend) | Isolated business logic: Spring services, React hooks/reducers | Every commit | Logic errors, incorrect calculations, broken validations | JUnit/Vitest reports, coverage |
+| API / Contract | MockMvc or REST Assured; optionally Pact for contract testing with the frontend | REST endpoints: HTTP status codes, JSON schemas, role-based authorization | Every commit / PR | Contract changes that break the frontend, endpoints missing input validation | Test reports + versioned contract |
+| Integration | `@SpringBootTest` + Testcontainers (real PostgreSQL in Docker) | Real service–repository–Postgres interaction, including migrations (Flyway/Liquibase) | Pull request | JPA mappings that only fail on Postgres (not H2), broken migrations, violated constraints | Execution logs, integration report |
+| Security / authentication | Spring Security Test (`@WithMockUser`, test JWTs) | Protected endpoints reject unauthenticated or unauthorized users | Pull request | Unprotected endpoints, data leaks between users, privilege escalation | Security test report, endpoint × role matrix |
+| Frontend E2E | Playwright/Cypress against a deployed staging environment | Real critical flows: login, catalog, cart, checkout, payment | Before release / nightly on staging | Regressions in the real React–API integration, broken critical business flows | Failure videos/screenshots, HTML report |
+| Load | k6 against staging (not local) | Behavior under real concurrency: catalog, checkout, payment gateway | Before release, in a controlled environment | Bottlenecks, timeouts, database degradation under load | k6 report (p95, error rate, throughput), dashboards |
+| Pipeline / CD | GitHub Actions + AWS deployment (ECS/CodeDeploy) | That build → test → deploy works without manual intervention | Every push/PR and before every release | Regressions not caught before production, broken deployments | Run history, status badges, artifacts |
+
+### Point 20 — Proposed testing pipeline
+
+Extends section 10's table to cover every layer from the integrative activity:
+
+```
+Every commit (fast, minutes):
+  - Backend + frontend compilation
+  - Backend unit tests (JUnit/Mockito)
+  - Frontend unit tests (Vitest/Jest)
+  - Lint / type-check
+
+Pull request:
+  - Everything above, plus:
+  - API tests (MockMvc)
+  - Integration tests with Testcontainers (real Postgres)
+  - Authentication/authorization tests
+  - Static security analysis (vulnerable dependencies)
+
+Before release / nightly (staging environment):
+  - Full E2E suite with Playwright against staging
+  - Load test with k6 against staging
+  - Post-deploy smoke tests on staging
+
+Production (post-deploy):
+  - Minimal smoke test
+  - Continuous monitoring and observability
+```
+
+The reasoning behind the order: each layer is slower and more expensive than the
+previous one, so it's reserved for the moment where its cost is justified by the
+risk it mitigates — running the full Playwright suite on every commit would be
+too slow for fast developer feedback, but skipping it before a release would let
+regressions in critical flows like checkout slip through.
+
+### Point 21 — Reflection: which tests add the most value?
+
+There's no single answer — it depends on the cost of a bug reaching production
+in that part of the system. Based on the evidence generated in this lab:
+
+- **Unit** tests gave the fastest, cheapest feedback (ms), but on their own they
+  wouldn't have caught, for example, that `@WebMvcTest` moved packages in Spring
+  Boot 4 — only compiling/running the real API test revealed that.
+- **Integration** gave the most confidence for the least writing effort: a
+  single test (`shouldCreateAndFindOrder`) validated that four layers genuinely
+  work together, something no unit test can claim.
+- **Load** was the only one capable of revealing information no other test in
+  the lab could: how the system behaves under 30 concurrent users, not just
+  whether a single request is correct.
+
+For a system like the e-commerce app in 11.1, the most value lies in the tests
+that protect the flows with the highest cost if they fail in production:
+**integration** (prevents a schema change from silently breaking order
+persistence) and **security** (an authorization failure exposes other users'
+data or enables fraudulent payments) are the highest priority, closely followed
+by **checkout E2E** — the flow where a bug costs the business real money. Unit
+tests remain the best cost/benefit ratio for fast day-to-day iteration, but
+they're not the ones that protect the business most if only one type of test
+could be kept.
+
 ## Lab progress
 
 - [x] Section 4 — Base Spring Boot project
@@ -384,4 +467,4 @@ person's section of work), which is why it lives directly on `develop`.
 - [x] Section 8 — Example E2E test with Playwright (Activity 4 design; no real frontend implemented)
 - [x] Section 9 — k6 load scripts (parameterized scripts + Activity 5 analysis)
 - [x] Section 10 — GitHub Actions pipeline for backend tests
-- [ ] Section 11 — Integrative activity and final challenge
+- [x] Section 11 — Integrative activity and final challenge
