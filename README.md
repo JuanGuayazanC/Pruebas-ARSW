@@ -17,6 +17,39 @@ Ingeniería de Sistemas
 Escuela Colombiana de Ingeniería Julio Garavito  
 2026-i
 
+## Estructura del repositorio
+
+```
+Pruebas-ARSW/
+├── README.md                          # este archivo: teoría general + guía de ejecución
+├── .github/workflows/                 # pipeline de CI (sección 10)
+│   └── arsw-testing-pipeline.yml
+├── order-api/                         # backend Spring Boot (Order API)
+│   ├── pom.xml
+│   ├── src/main/java/edu/eci/arsw/testing/...
+│   └── src/test/java/edu/eci/arsw/testing/...
+├── frontend-tests/                    # pruebas E2E con Playwright (sección 8)
+│   └── tests/orders.spec.js
+└── load-tests/                        # scripts de carga con k6 (sección 9)
+    ├── load-test.js
+    └── load-test-stages.js
+```
+
+## Cómo ejecutar
+
+Desde `order-api/`:
+
+```bash
+# compilar
+mvn compile
+
+# ejecutar la aplicación (por defecto en el puerto 8080)
+mvn spring-boot:run
+
+# ejecutar las pruebas
+mvn test
+```
+
 ## Idea central
 
 Probar no es solo verificar que una funcionalidad responde. Probar es construir
@@ -60,24 +93,6 @@ Las rápidas (unitarias, API) se ejecutan con frecuencia; las costosas (integrac
 completa, E2E, carga) se reservan para pull requests, releases o ambientes
 controlados.
 
-## Estructura del repositorio
-
-```
-Pruebas-ARSW/
-├── README.md                          # este archivo: teoría general + guía de ejecución
-├── .github/workflows/                 # pipeline de CI (sección 10)
-│   └── arsw-testing-pipeline.yml
-├── order-api/                         # backend Spring Boot (Order API)
-│   ├── pom.xml
-│   ├── src/main/java/edu/eci/arsw/testing/...
-│   └── src/test/java/edu/eci/arsw/testing/...
-├── frontend-tests/                    # pruebas E2E con Playwright (sección 8)
-│   └── tests/orders.spec.js
-└── load-tests/                        # scripts de carga con k6 (sección 9)
-    ├── load-test.js
-    └── load-test-stages.js
-```
-
 ## Order API — proyecto base (sección 4)
 
 API simple de pedidos, suficiente para aplicar los distintos tipos de pruebas sin
@@ -114,21 +129,6 @@ Spring Boot Test.
 - `repository` — `OrderRepository`, extiende `JpaRepository<Order, String>`.
 - `service` — `OrderService`, regla de negocio: rechaza pedidos con `total > 5.000.000`.
 - `controller` — `OrderController`, expone `POST /orders` y `GET /orders/{id}`.
-
-### Cómo ejecutar
-
-Desde `order-api/`:
-
-```bash
-# compilar
-mvn compile
-
-# ejecutar la aplicación (por defecto en el puerto 8080)
-mvn spring-boot:run
-
-# ejecutar las pruebas
-mvn test
-```
 
 ### Endpoints
 
