@@ -369,6 +369,89 @@ Java 17 (Temurin) y corre `mvn test`.
 Este pipeline es infraestructura compartida del laboratorio (no pertenece a la
 sección de trabajo de una sola persona), por eso vive directamente en `develop`.
 
+## Sección 11 — Actividad integradora y reto final
+
+### 11.1 Actividad integradora: estrategia de pruebas para un e-commerce
+
+Escenario: frontend React, backend Spring Boot, base de datos PostgreSQL, API REST,
+autenticación y despliegue en AWS. A diferencia del Order API del laboratorio (H2 en
+memoria, sin autenticación, sin frontend ni despliegue reales), este escenario agrega
+tres fuentes nuevas de riesgo: una base de datos real con su propio comportamiento,
+un perímetro de seguridad que proteger, y un frontend/infraestructura que sí se
+despliegan de verdad. Eso es justamente lo que más cambia en la pirámide de pruebas:
+la capa de **integración** (ya no basta con H2, hay que probar contra Postgres real
+con Testcontainers, incluyendo migraciones) y aparece una capa nueva de **seguridad**
+que el laboratorio no necesitó porque el Order API no tiene autenticación.
+
+| Tipo de prueba | Herramientas | Capa que valida | Momento en el pipeline | Errores que detecta | Evidencia que genera |
+|---|---|---|---|---|---|
+| Unitaria | JUnit 5 + Mockito (backend); Vitest/Jest + Testing Library (frontend) | Lógica de negocio aislada: servicios Spring, hooks/reducers de React | Cada commit | Errores de lógica, cálculos incorrectos, validaciones rotas | Reporte JUnit/Vitest, cobertura |
+| API / Contrato | MockMvc o REST Assured; opcionalmente Pact para contract testing con el frontend | Endpoints REST: códigos HTTP, esquemas JSON, autorización por rol | Cada commit / PR | Cambios de contrato que rompen al frontend, endpoints sin validar entrada | Reportes de test + contrato versionado |
+| Integración | `@SpringBootTest` + Testcontainers (PostgreSQL real en Docker) | Interacción real servicio–repositorio–Postgres, incluyendo migraciones (Flyway/Liquibase) | Pull request | Mapeos JPA que fallan solo en Postgres (no en H2), migraciones rotas, constraints violados | Logs de ejecución, reporte de integración |
+| Seguridad / autenticación | Spring Security Test (`@WithMockUser`, JWT de prueba) | Que los endpoints protegidos rechacen usuarios no autenticados o sin permiso | Pull request | Endpoints desprotegidos, fuga de datos entre usuarios, escalado de privilegios | Reporte de pruebas de seguridad, matriz endpoint × rol |
+| Frontend E2E | Playwright/Cypress contra un ambiente de staging desplegado | Flujos críticos reales: login, catálogo, carrito, checkout, pago | Antes de release / nightly en staging | Regresiones en la integración React–API real, fallos de flujos críticos de negocio | Video/screenshots de fallos, reporte HTML |
+| Carga | k6 contra staging (no contra local) | Comportamiento bajo concurrencia real: catálogo, checkout, pasarela de pago | Antes de release, en ambiente controlado | Cuellos de botella, timeouts, degradación de la base de datos bajo carga | Reporte k6 (p95, error rate, throughput), dashboards |
+| Pipeline / CD | GitHub Actions + despliegue en AWS (ECS/CodeDeploy) | Que build → test → deploy funcione sin intervención manual | Cada push/PR y antes de cada release | Regresiones no detectadas antes de producción, despliegues rotos | Historial de ejecuciones, badges de estado, artefactos |
+
+### Punto 20 — Pipeline de pruebas propuesto
+
+Extiende la tabla de la sección 10, cubriendo todas las capas de la actividad
+integradora:
+
+```
+Cada commit (rápido, minutos):
+  - Compilación backend + frontend
+  - Pruebas unitarias backend (JUnit/Mockito)
+  - Pruebas unitarias frontend (Vitest/Jest)
+  - Lint / type-check
+
+Pull request:
+  - Todo lo anterior, más:
+  - Pruebas de API (MockMvc)
+  - Pruebas de integración con Testcontainers (Postgres real)
+  - Pruebas de autenticación/autorización
+  - Análisis estático de seguridad (dependencias vulnerables)
+
+Antes de release / nightly (ambiente de staging):
+  - Suite E2E completa con Playwright contra staging
+  - Prueba de carga con k6 contra staging
+  - Smoke tests post-despliegue en staging
+
+Producción (post-deploy):
+  - Smoke test mínimo
+  - Monitoreo y observabilidad continuos
+```
+
+La razón del orden: cada capa es más lenta y cara que la anterior, así que se reserva
+para el momento donde el costo de ejecutarla se justifica por el riesgo que mitiga —
+correr Playwright completo en cada commit sería demasiado lento para dar feedback
+rápido al desarrollador, pero omitirlo antes de un release dejaría pasar regresiones
+de flujos críticos como el checkout.
+
+### Punto 21 — Reflexión: ¿qué pruebas aportan más valor?
+
+No hay una respuesta única — depende del costo de que un error llegue a producción en
+esa parte del sistema. Con la evidencia que generamos en este laboratorio:
+
+- Las **unitarias** dieron el feedback más rápido y barato (ms), pero por sí solas no
+  hubieran detectado, por ejemplo, que `@WebMvcTest` cambió de paquete en Spring Boot
+  4 — eso solo lo reveló compilar/ejecutar la prueba de API real.
+- La de **integración** fue la que más confianza dio con menor esfuerzo de escritura:
+  un solo test (`shouldCreateAndFindOrder`) validó que cuatro capas trabajan juntas de
+  verdad, algo que ninguna prueba unitaria puede afirmar.
+- La de **carga** fue la única capaz de revelar información que ninguna otra prueba
+  del laboratorio podía dar: cómo se comporta el sistema bajo 30 usuarios concurrentes,
+  no solo si una solicitud individual es correcta.
+
+Para un sistema como el e-commerce del punto 11.1, el mayor valor está en las pruebas
+que protegen los flujos con más costo si fallan en producción: **integración** (evita
+que un cambio de esquema rompa silenciosamente el guardado de pedidos) y **seguridad**
+(un fallo de autorización expone datos de otros usuarios o permite pagos fraudulentos)
+son las de mayor prioridad, seguidas de cerca por **E2E del checkout** — es el flujo
+donde un bug le cuesta dinero real al negocio. Las unitarias siguen siendo las de mejor
+relación costo/beneficio para iterar rápido día a día, pero no son las que más protegen
+al negocio si solo se pudiera mantener un tipo de prueba.
+
 ## Progreso del laboratorio
 
 - [x] Sección 4 — Proyecto base Spring Boot
@@ -378,4 +461,4 @@ sección de trabajo de una sola persona), por eso vive directamente en `develop`
 - [x] Sección 8 — Prueba E2E de ejemplo con Playwright (diseño de Actividad 4; frontend real no implementado)
 - [x] Sección 9 — Scripts de carga con k6 (scripts parametrizados y análisis de Actividad 5)
 - [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
-- [ ] Sección 11 — Actividad integradora y reto final
+- [x] Sección 11 — Actividad integradora y reto final
