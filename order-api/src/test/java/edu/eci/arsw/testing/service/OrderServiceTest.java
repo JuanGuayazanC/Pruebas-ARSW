@@ -7,6 +7,7 @@ import edu.eci.arsw.testing.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,5 +43,32 @@ class OrderServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> service.createOrder(request));
         verify(repository, never()).save(any(Order.class));
+    }
+
+    @Test
+    void shouldReturnOrderWhenIdExists() {
+        OrderRepository repository = mock(OrderRepository.class);
+        OrderService service = new OrderService(repository);
+
+        Order existingOrder = new Order("ORD-1", "CUS-01", 120000, "CREATED", Instant.now());
+        when(repository.findById("ORD-1")).thenReturn(Optional.of(existingOrder));
+
+        OrderResponse response = service.findById("ORD-1");
+
+        assertNotNull(response);
+        assertEquals("ORD-1", response.id());
+        assertEquals("CUS-01", response.customerId());
+        assertEquals(120000, response.total());
+        assertEquals("CREATED", response.status());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOrderNotFound() {
+        OrderRepository repository = mock(OrderRepository.class);
+        OrderService service = new OrderService(repository);
+
+        when(repository.findById("ORD-404")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> service.findById("ORD-404"));
     }
 }

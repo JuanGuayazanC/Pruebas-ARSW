@@ -57,14 +57,16 @@ Pruebas-ARSW/
 ├── README.md                          # this file: general theory + execution guide
 ├── .github/workflows/                 # CI pipeline (section 10)
 │   └── arsw-testing-pipeline.yml
-└── order-api/                         # Spring Boot backend (Order API)
-    ├── pom.xml
-    ├── src/main/java/edu/eci/arsw/testing/...
-    └── src/test/java/edu/eci/arsw/testing/...
+├── order-api/                         # Spring Boot backend (Order API)
+│   ├── pom.xml
+│   ├── src/main/java/edu/eci/arsw/testing/...
+│   └── src/test/java/edu/eci/arsw/testing/...
+├── frontend-tests/                    # Playwright E2E tests (section 8)
+│   └── tests/orders.spec.js
+└── load-tests/                        # k6 load scripts (section 9)
+    ├── load-test.js
+    └── load-test-stages.js
 ```
-
-> The `frontend-tests/` (Playwright, section 8) and `load-tests/` (k6, section
-> 9) folders are added on the working branch for that part of the lab.
 
 ## Order API — base project (section 4)
 
@@ -142,11 +144,16 @@ context is started: this is the fastest, cheapest test in the pyramid.
   `save` is **never** called (`verify(repository, never())`) — confirming the
   business rule short-circuits the flow before touching the repository.
 
-Run only this class: `mvn -Dtest=OrderServiceTest test`
+- `shouldReturnOrderWhenIdExists` (Activity 1): mocks
+  `repository.findById("ORD-1")` to return `Optional.of(order)` and validates
+  that `OrderResponse` has the same data as the mocked entity.
+- `shouldThrowExceptionWhenOrderNotFound` (Activity 1): mocks
+  `repository.findById(...)` to return `Optional.empty()` and uses
+  `assertThrows` to validate that `findById` throws
+  `IllegalArgumentException` — covering the branch of `orElseThrow` that
+  actually fires.
 
-> **Pending (guide Activity 1):** add tests for `findById` — one that returns
-> an existing order and another that throws an exception when the order does
-> not exist.
+Run only this class: `mvn -Dtest=OrderServiceTest test`
 
 ## Section 6 — API tests with MockMvc
 
@@ -169,10 +176,11 @@ The `OrderService` dependency is replaced with `@MockitoBean`.
 > `MockMvcResultMatchers`) remain in Spring Framework
 > (`org.springframework.test.web.servlet.*`) and did not change.
 
-Run only this class: `mvn -Dtest=OrderControllerTest test`
+- `shouldFindOrderById` (Activity 2): mocks `service.findById("ORD-1")` and
+  performs `GET /orders/ORD-1`, validating `200 OK` and the `id`,
+  `customerId` and `status` in the response body.
 
-> **Pending (guide Activity 2):** add a test for `GET /orders/{id}` that
-> validates `200 OK`, the order's `id`, `customerId` and `status`.
+Run only this class: `mvn -Dtest=OrderControllerTest test`
 
 ## Section 7 — Integration tests
 
@@ -196,10 +204,158 @@ default in-memory H2; using a real PostgreSQL container in the test would be a
 future extension (replacing the `DataSource` with one backed by a
 Testcontainers container).
 
-> **Pending (guide Activity 3):** explain the difference between the
-> service's unit test, the controller's MockMvc test, and the integration
-> test with `@SpringBootTest`, analyzing speed, confidence and maintenance
-> cost.
+### Activity 3 — Unit vs. MockMvc vs. Integration
+
+| | Unit (`OrderServiceTest`) | API/MockMvc (`OrderControllerTest`) | Integration (`OrderIntegrationTest`) |
+|---|---|---|---|
+| **What it starts** | No Spring at all; just the `OrderService` object with a mocked `OrderRepository` | Only the web layer (`@WebMvcTest`): the `DispatcherServlet`, `OrderController` and JSON serialization, with `OrderService` mocked | The full Spring context: controller, service, repository and a real H2 database |
+| **Speed** | Fastest (ms) — no context startup or I/O | Intermediate — starts a partial Spring context, slower than unit but much lighter than a full one | Slowest — starts the whole context, configures JPA/Hibernate and a real database connection |
+| **Confidence** | Low/medium — tests business logic in isolation, but doesn't guarantee the controller, serialization or repository actually work together | Medium — guarantees routes, HTTP status codes, validations (`@Valid`) and input/output JSON are correct, but `OrderService` is still fake | High — the only one that proves the real pieces (service + repository + JPA + database) actually integrate and produce the expected result |
+| **Maintenance cost** | Low — mocking the only dependency means database or Spring changes don't break this test; it only breaks if the `OrderService`/`OrderRepository` contract changes | Medium — can break due to route, DTO or validation rule changes, though it doesn't depend on the database | High — more fragile to configuration changes (datasource properties, JPA mapping, Spring Boot version), and more expensive to debug when it fails because more pieces are involved |
+
+**Conclusion:** none replaces the others — each one catches a different kind of error (business logic vs. HTTP contract vs. real integration), which is why the guide organizes them as a pyramid: many cheap unit tests at the base, fewer expensive integration tests at the top. An ideal change is first validated with the unit test (immediate feedback) and confirmed with the integration test before merging.
+
+## Section 8 — Automated frontend tests with Playwright
+
+Playwright automates a real browser to validate complete flows **from the
+user's perspective** (end-to-end): it opens the page, fills forms, clicks and
+verifies what's on screen. It's the slowest, most expensive layer before load
+tests, but the one that most closely resembles what a real user does.
+
+`frontend-tests/tests/orders.spec.js` contains two example tests from the
+guide:
+
+- Verifies that the main page loads with an expected title.
+- Simulates creating an order by filling `customer-id` and `order-total`,
+  clicking `create-order`, and checking that `order-status` shows `CREATED`.
+
+**Important — this is not runnable as-is yet:** the test points to
+`http://localhost:5173` (Vite's typical port) and to `data-testid` selectors,
+but **this repository has no frontend implementation** — the guide doesn't ask
+for one to be built, it just assumes one exists. That's why the final
+challenge (section 11) says *"propose or implement"* an E2E test: proposing it
+already meets the learning objective.
+
+For these selectors to ever work, frontend components should include
+`data-testid` attributes (avoids depending on text or styles that change
+often):
+
+```html
+<input data-testid="customer-id" />
+<input data-testid="order-total" />
+<button data-testid="create-order">Create order</button>
+<div data-testid="order-status"></div>
+```
+
+`npm init playwright@latest` (section 8.1) was not run: it's an interactive
+scaffolding tool that downloads browser binaries (Chromium/Firefox/WebKit,
+several hundred MB). When you have a real frontend to test against:
+
+```bash
+cd frontend-tests
+npm init playwright@latest
+npx playwright test
+npx playwright show-report
+```
+
+### Activity 4 — Design of three E2E tests
+
+The repository has no runnable frontend application, so these tests are
+presented as a functional design for a future React interface. The goal is to
+validate the critical flows from the browser, using stable `data-testid`
+selectors and verifying the result visible to the user.
+
+| Test | Flow | Input data | Expected result |
+|---|---|---|---|
+| Successfully create an order | Open the orders screen, fill in the form and select **Create order**. | `customerId = CUS-E2E-01`, `total = 120000`. | The UI shows a confirmation, a generated id and `CREATED` status; the underlying HTTP response is `201 Created`. |
+| Reject an invalid total | Open the form, enter a total below 1 and submit it. | `customerId = CUS-E2E-INVALID`, `total = -10`. | The UI shows a validation error, does not show a created order, and the API responds `400 Bad Request`; no valid order should be sent to the service. |
+| Look up an order by id | Create or select an existing order, copy its id, open the lookup screen, enter the id and select **Search**. | `orderId` returned by the first test, e.g. `ORD-...`. | The UI shows the correct order with the same id, `customerId` and `CREATED` status; the API responds `200 OK`. |
+
+Proposed automation flow for the selectors: `[data-testid="customer-id"]`,
+`[data-testid="order-total"]`, `[data-testid="create-order"]`,
+`[data-testid="order-id"]`, `[data-testid="order-status"]`,
+`[data-testid="order-search-id"]` and `[data-testid="find-order"]`. The third
+test must reuse the id captured from the response or the UI, never a fixed id
+that might not exist in the database.
+
+As an additional criterion, each test should clean up or isolate its data so
+it doesn't depend on execution order. Once a real frontend exists, this design
+can be turned into a runnable Playwright test, adding a `webServer` to start
+the frontend and the API during the test.
+
+## Section 9 — Load tests with k6
+
+Load tests validate how the system behaves under multiple concurrent users or
+requests: latency, throughput, error rate and degradation. Unlike the layers
+above, here **how many** requests fire and over how much time actually
+matters, not just whether the response is correct.
+
+- `load-tests/load-test.js`: simple, constant load — 10 *virtual users*
+  (`vus`) for 30s, issuing `GET /orders/{id}` and checking for `status 200`
+  and `< 500ms` response time. The id comes from `ORDER_ID` and defaults to
+  `ORD-1` to keep compatibility with the guide.
+- `load-tests/load-test-stages.js`: variable load via *stages* (ramp 0→10 over
+  20s, 10→30 over 30s, 30→0 over 20s) against `POST /orders`, with
+  **thresholds**: the test fails if the error rate exceeds 5% or the p95
+  latency exceeds 800ms. `__VU` is the current virtual user id, used to
+  generate a different `customerId` per user. Both scripts accept `BASE_URL`;
+  they default to `http://localhost:8080`.
+
+To run, with `order-api` running on `localhost:8080`
+(`mvn spring-boot:run` from `order-api/`):
+
+```bash
+# install (pick based on OS)
+winget install k6            # Windows
+brew install k6               # macOS
+docker run --rm -i grafana/k6 run - < load-test.js   # Docker, no install needed
+
+# run
+cd load-tests
+k6 run load-test.js --env ORDER_ID=ORD-<existing-id>
+k6 run load-test-stages.js
+```
+
+To get the id the basic test needs, first create an order against the API and
+pass the returned id to k6. In PowerShell:
+
+```powershell
+$order = Invoke-RestMethod -Method Post -Uri http://localhost:8080/orders `
+  -ContentType 'application/json' `
+  -Body '{"customerId":"CUS-LOAD-GET","total":120000}'
+k6 run load-test.js --env ORDER_ID=$order.id
+```
+
+### Activity 5 — Execution and analysis
+
+The run was performed locally against Spring Boot, using Java 21, Maven
+3.9.12, in-memory H2 and k6 on Windows. The API must stay up on
+`http://localhost:8080` during both tests; no PostgreSQL, Docker, AWS or
+external deployment is required for this lab. The load test runs from a
+controlled environment and is not wired into the per-commit pipeline because
+it takes longer and could interfere with other jobs; it's a candidate for a
+manual run or a pre-release step.
+
+| Script | VUs | Duration/config | Requests | Failures | p95 | Thresholds | Result |
+|---|---:|---|---:|---:|---:|---|---|
+| `load-test.js` | 10 | 30 s constant | 300 | 0.00% (0/300) | 18.11 ms | Not configured; checks 100%: HTTP 200 and < 500 ms | Successful |
+| `load-test-stages.js` | 0→10→30→0 (max. 30) | 20 s + 30 s + 20 s = 70 s | 1004 | 0.00% (0/1004) | 9.87 ms | `http_req_failed < 5%`: passed; `http_req_duration p(95) < 800 ms`: passed | Successful |
+
+Request counts and metrics are filled in directly from k6's summary output for
+each run. The conclusion should take into account that this result is a
+single-instance local baseline with in-memory H2: it's useful for catching
+regressions and comparing changes, but it doesn't represent production
+capacity. For a deployed environment, `BASE_URL` can be used, e.g.:
+`k6 run load-test-stages.js --env BASE_URL=https://api.example.com`.
+
+**Technical conclusion:** the API responded steadily in the local environment
+under the evaluated loads. The constant-load test processed 300 requests with
+no errors, and the staged-load test processed 1004 requests without exceeding
+the thresholds; in both cases p95 stayed well under the configured limit or,
+for the basic test, the 500ms check. These results do not support claims about
+production capacity: an external database, real network between services,
+authentication, observability and a load representative of the target
+deployment are all missing.
 
 ## Section 10 — Testing strategy in CI/CD
 
@@ -222,10 +378,10 @@ person's section of work), which is why it lives directly on `develop`.
 ## Lab progress
 
 - [x] Section 4 — Base Spring Boot project
-- [x] Section 5 — Unit tests with JUnit and Mockito (base code; Activity 1 pending)
-- [x] Section 6 — API tests with MockMvc (base code; Activity 2 pending)
-- [x] Section 7 — Integration tests + Testcontainers dependencies (Activity 3 pending)
+- [x] Section 5 — Unit tests with JUnit and Mockito (includes Activity 1)
+- [x] Section 6 — API tests with MockMvc (includes Activity 2)
+- [x] Section 7 — Integration tests + Testcontainers dependencies (includes Activity 3)
+- [x] Section 8 — Example E2E test with Playwright (Activity 4 design; no real frontend implemented)
+- [x] Section 9 — k6 load scripts (parameterized scripts + Activity 5 analysis)
 - [x] Section 10 — GitHub Actions pipeline for backend tests
-- [ ] Section 8 — Frontend E2E tests with Playwright (on that part's working branch)
-- [ ] Section 9 — Load tests with k6 (on that part's working branch)
 - [ ] Section 11 — Integrative activity and final challenge
