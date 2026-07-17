@@ -17,6 +17,39 @@ Systems Engineering
 Colombian School of Engineering Julio Garavito  
 2026-i
 
+## Repository structure
+
+```
+Pruebas-ARSW/
+├── README.md                          # this file: general theory + execution guide
+├── .github/workflows/                 # CI pipeline (section 10)
+│   └── arsw-testing-pipeline.yml
+├── order-api/                         # Spring Boot backend (Order API)
+│   ├── pom.xml
+│   ├── src/main/java/edu/eci/arsw/testing/...
+│   └── src/test/java/edu/eci/arsw/testing/...
+├── frontend-tests/                    # Playwright E2E tests (section 8)
+│   └── tests/orders.spec.js
+└── load-tests/                        # k6 load scripts (section 9)
+    ├── load-test.js
+    └── load-test-stages.js
+```
+
+## How to Run
+
+From `order-api/`:
+
+```bash
+# compile
+mvn compile
+
+# run the application (port 8080 by default)
+mvn spring-boot:run
+
+# run the tests
+mvn test
+```
+
 ## Central idea
 
 Testing is not just about checking that a feature responds. Testing is about
@@ -59,24 +92,6 @@ the system's real behavior.
 tests (unit, API) run frequently; expensive ones (full integration, E2E, load)
 are reserved for pull requests, releases or controlled environments.
 
-## Repository structure
-
-```
-Pruebas-ARSW/
-├── README.md                          # this file: general theory + execution guide
-├── .github/workflows/                 # CI pipeline (section 10)
-│   └── arsw-testing-pipeline.yml
-├── order-api/                         # Spring Boot backend (Order API)
-│   ├── pom.xml
-│   ├── src/main/java/edu/eci/arsw/testing/...
-│   └── src/test/java/edu/eci/arsw/testing/...
-├── frontend-tests/                    # Playwright E2E tests (section 8)
-│   └── tests/orders.spec.js
-└── load-tests/                        # k6 load scripts (section 9)
-    ├── load-test.js
-    └── load-test-stages.js
-```
-
 ## Order API — base project (section 4)
 
 A simple order API, just enough to apply the different types of tests without
@@ -115,21 +130,6 @@ Database, Spring Boot Test.
   `total > 5,000,000`.
 - `controller` — `OrderController`, exposes `POST /orders` and
   `GET /orders/{id}`.
-
-### How to run
-
-From `order-api/`:
-
-```bash
-# compile
-mvn compile
-
-# run the application (port 8080 by default)
-mvn spring-boot:run
-
-# run the tests
-mvn test
-```
 
 ### Endpoints
 
