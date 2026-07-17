@@ -8,6 +8,15 @@ cerrando con una estrategia de ejecución en CI/CD.
 Este README documenta la teoría general del laboratorio y se irá completando a medida
 que se avanza en cada sección.
 
+## Autor
+
+JUAN SEBASTIÁN GUAYAZÁN CLAVIJO  
+Arquitecturas de Software (ISIS ARSW - 101)  
+Decanatura de Ingeniería de Sistemas  
+Ingeniería de Sistemas  
+Escuela Colombiana de Ingeniería Julio Garavito  
+2026-i
+
 ## Idea central
 
 Probar no es solo verificar que una funcionalidad responde. Probar es construir
