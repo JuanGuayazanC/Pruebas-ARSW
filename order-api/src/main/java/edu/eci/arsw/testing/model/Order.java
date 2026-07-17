@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 /**
- * JPA entity representing a customer order persisted in the database.
+ * Entidad JPA que representa un pedido de un cliente persistido en la base de datos.
  */
 @Entity
 @Table(name = "orders")
@@ -20,13 +20,13 @@ public class Order {
     protected Order() {}
 
     /**
-     * Creates a new order.
+     * Crea un nuevo pedido.
      *
-     * @param id order identifier
-     * @param customerId identifier of the customer placing the order
-     * @param total order total amount
-     * @param status current order status
-     * @param createdAt creation timestamp
+     * @param id identificador del pedido
+     * @param customerId identificador del cliente que realiza el pedido
+     * @param total valor total del pedido
+     * @param status estado actual del pedido
+     * @param createdAt fecha y hora de creación
      */
     public Order(String id, String customerId, double total, String status, Instant createdAt) {
         this.id = id;

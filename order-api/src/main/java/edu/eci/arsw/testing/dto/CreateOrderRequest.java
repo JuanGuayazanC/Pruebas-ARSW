@@ -4,10 +4,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * Request payload for creating a new order.
+ * Payload de solicitud para crear un nuevo pedido.
  *
- * @param customerId identifier of the customer placing the order, must not be blank
- * @param total order total amount, must be at least 1
+ * @param customerId identificador del cliente que realiza el pedido, no debe estar vacío
+ * @param total valor total del pedido, debe ser al menos 1
  */
 public record CreateOrderRequest(
         @NotBlank String customerId,

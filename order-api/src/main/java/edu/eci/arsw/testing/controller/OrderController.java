@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST endpoints for creating and querying orders.
+ * Endpoints REST para crear y consultar pedidos.
  */
 @RestController
 @RequestMapping("/orders")
@@ -21,10 +21,10 @@ public class OrderController {
     }
 
     /**
-     * Creates a new order.
+     * Crea un nuevo pedido.
      *
-     * @param request order creation payload
-     * @return the created order
+     * @param request payload de creación del pedido
+     * @return el pedido creado
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -33,10 +33,10 @@ public class OrderController {
     }
 
     /**
-     * Retrieves an order by its identifier.
+     * Consulta un pedido por su identificador.
      *
-     * @param id order identifier
-     * @return the matching order
+     * @param id identificador del pedido
+     * @return el pedido encontrado
      */
     @GetMapping("/{id}")
     public OrderResponse findById(@PathVariable String id) {

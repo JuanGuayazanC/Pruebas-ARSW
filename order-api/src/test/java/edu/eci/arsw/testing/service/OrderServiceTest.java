@@ -14,12 +14,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link OrderService}, with {@link OrderRepository} mocked out.
+ * Pruebas unitarias de {@link OrderService}, simulando {@link OrderRepository}.
  */
 class OrderServiceTest {
 
     /**
-     * Verifies that a valid request is persisted and mapped into the response DTO.
+     * Verifica que una solicitud válida se persiste y se mapea correctamente al DTO de respuesta.
      */
     @Test
     void shouldCreateOrderWhenRequestIsValid() {
@@ -41,7 +41,7 @@ class OrderServiceTest {
     }
 
     /**
-     * Verifies that a total above the allowed limit is rejected before touching the repository.
+     * Verifica que un total superior al límite permitido se rechaza antes de tocar el repositorio.
      */
     @Test
     void shouldRejectOrderWhenTotalExceedsLimit() {
@@ -55,7 +55,7 @@ class OrderServiceTest {
     }
 
     /**
-     * Verifies that an existing order is mapped into the response DTO when found.
+     * Verifica que un pedido existente se mapea al DTO de respuesta cuando se encuentra.
      */
     @Test
     void shouldReturnOrderWhenIdExists() {
@@ -75,7 +75,7 @@ class OrderServiceTest {
     }
 
     /**
-     * Verifies that looking up a non-existent order throws {@link IllegalArgumentException}.
+     * Verifica que buscar un pedido inexistente lanza {@link IllegalArgumentException}.
      */
     @Test
     void shouldThrowExceptionWhenOrderNotFound() {

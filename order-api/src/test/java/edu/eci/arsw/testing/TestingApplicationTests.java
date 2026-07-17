@@ -4,13 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Smoke test that verifies the Spring application context loads correctly.
+ * Prueba de humo que verifica que el contexto de la aplicación Spring carga correctamente.
  */
 @SpringBootTest
 class TestingApplicationTests {
 
 	/**
-	 * Verifies that the application context starts without errors.
+	 * Verifica que el contexto de la aplicación arranca sin errores.
 	 */
 	@Test
 	void contextLoads() {

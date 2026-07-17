@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * MockMvc tests for {@link OrderController}, with {@link OrderService} mocked out.
+ * Pruebas MockMvc de {@link OrderController}, simulando {@link OrderService}.
  */
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
@@ -32,7 +32,7 @@ class OrderControllerTest {
     private OrderService service;
 
     /**
-     * Verifies that a valid POST request creates an order and returns 201 with its data.
+     * Verifica que una solicitud POST válida crea un pedido y devuelve 201 con sus datos.
      */
     @Test
     void shouldCreateOrder() throws Exception {
@@ -55,7 +55,7 @@ class OrderControllerTest {
     }
 
     /**
-     * Verifies that an invalid request body is rejected with 400 by bean validation.
+     * Verifica que un cuerpo de solicitud inválido se rechaza con 400 por la validación de Bean Validation.
      */
     @Test
     void shouldRejectInvalidRequest() throws Exception {
@@ -71,7 +71,7 @@ class OrderControllerTest {
     }
 
     /**
-     * Verifies that GET /orders/{id} returns 200 with the order's data.
+     * Verifica que GET /orders/{id} devuelve 200 con los datos del pedido.
      */
     @Test
     void shouldFindOrderById() throws Exception {

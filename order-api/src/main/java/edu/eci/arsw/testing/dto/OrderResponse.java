@@ -3,13 +3,13 @@ package edu.eci.arsw.testing.dto;
 import java.time.Instant;
 
 /**
- * Response payload representing an order returned by the API.
+ * Payload de respuesta que representa un pedido devuelto por la API.
  *
- * @param id order identifier
- * @param customerId identifier of the customer that placed the order
- * @param total order total amount
- * @param status current order status
- * @param createdAt creation timestamp
+ * @param id identificador del pedido
+ * @param customerId identificador del cliente que realizó el pedido
+ * @param total valor total del pedido
+ * @param status estado actual del pedido
+ * @param createdAt fecha y hora de creación
  */
 public record OrderResponse(
         String id,

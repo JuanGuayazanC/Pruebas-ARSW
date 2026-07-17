@@ -10,8 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests that exercise the full Spring context: controller, service,
- * repository and the in-memory H2 database, with no mocks.
+ * Pruebas de integración que ejercitan el contexto completo de Spring: controlador,
+ * servicio, repositorio y la base de datos H2 en memoria, sin mocks.
  */
 @SpringBootTest
 class OrderIntegrationTest {
@@ -20,7 +20,7 @@ class OrderIntegrationTest {
     private OrderService service;
 
     /**
-     * Verifies that an order created through the real service can be found by id.
+     * Verifica que un pedido creado a través del servicio real puede encontrarse por id.
      */
     @Test
     void shouldCreateAndFindOrder() {

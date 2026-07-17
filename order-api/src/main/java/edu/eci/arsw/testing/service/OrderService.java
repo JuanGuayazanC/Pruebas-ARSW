@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Business logic for creating and retrieving orders.
+ * Lógica de negocio para crear y consultar pedidos.
  */
 @Service
 public class OrderService {
@@ -22,11 +22,11 @@ public class OrderService {
     }
 
     /**
-     * Creates a new order from the given request.
+     * Crea un nuevo pedido a partir de la solicitud recibida.
      *
-     * @param request data required to create the order
-     * @return the created order
-     * @throws IllegalArgumentException if the order total exceeds the maximum allowed value
+     * @param request datos requeridos para crear el pedido
+     * @return el pedido creado
+     * @throws IllegalArgumentException si el total del pedido supera el valor máximo permitido
      */
     public OrderResponse createOrder(CreateOrderRequest request) {
         if (request.total() > 5_000_000) {
@@ -50,11 +50,11 @@ public class OrderService {
     }
 
     /**
-     * Finds an order by its identifier.
+     * Busca un pedido por su identificador.
      *
-     * @param id order identifier
-     * @return the matching order
-     * @throws IllegalArgumentException if no order exists with the given id
+     * @param id identificador del pedido
+     * @return el pedido encontrado
+     * @throws IllegalArgumentException si no existe ningún pedido con ese id
      */
     public OrderResponse findById(String id) {
         Order order = repository.findById(id)
