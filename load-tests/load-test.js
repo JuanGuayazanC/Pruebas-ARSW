@@ -6,8 +6,11 @@ export const options = {
   duration: '30s',
 };
 
+const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+const orderId = __ENV.ORDER_ID || 'ORD-1';
+
 export default function () {
-  const response = http.get('http://localhost:8080/orders/ORD-1');
+  const response = http.get(`${baseUrl}/orders/${orderId}`);
 
   check(response, {
     'status is 200': (r) => r.status === 200,

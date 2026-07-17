@@ -13,6 +13,8 @@ export const options = {
   },
 };
 
+const baseUrl = __ENV.BASE_URL || 'http://localhost:8080';
+
 export default function () {
   const payload = JSON.stringify({
     customerId: `CUS-${__VU}`,
@@ -23,7 +25,7 @@ export default function () {
     headers: { 'Content-Type': 'application/json' },
   };
 
-  const response = http.post('http://localhost:8080/orders', payload, params);
+  const response = http.post(`${baseUrl}/orders`, payload, params);
 
   check(response, {
     'created': (r) => r.status === 201,
