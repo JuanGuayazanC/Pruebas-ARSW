@@ -1,12 +1,7 @@
-# Pruebas ARSW — Estrategia Integral de Pruebas
+# *Laboratorio* Pruebas (Estrategia Integral de Pruebas para Aplicaciones Web y Microservicios)
+Construye una API de pedidos (`Order API`) en Spring Boot y le aplica, capa por capa, distintos tipos de pruebas: unitarias, de API, de integración, end-to-end de frontend y de carga, cerrando con una estrategia de ejecución en CI/CD.
 
-Laboratorio de la asignatura *Arquitecturas de Software (ARSW)*. Construye una API de
-pedidos (`Order API`) en Spring Boot y le aplica, capa por capa, distintos tipos de
-pruebas: unitarias, de API, de integración, end-to-end de frontend y de carga,
-cerrando con una estrategia de ejecución en CI/CD.
-
-Este README documenta la teoría general del laboratorio y se irá completando a medida
-que se avanza en cada sección.
+Este README documenta la teoría general del laboratorio y se irá completando a medida que se avanza en cada sección.
 
 ## Autor
 
