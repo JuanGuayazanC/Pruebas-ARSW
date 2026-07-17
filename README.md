@@ -241,10 +241,30 @@ npx playwright test
 npx playwright show-report
 ```
 
-> **Pendiente (Actividad 4 de la guía):** diseñar tres pruebas E2E — crear pedido
-> exitosamente, mostrar error si el total es inválido, y consultar un pedido por
-> id — indicando para cada una el flujo, los datos de entrada y el resultado
-> esperado.
+### Actividad 4 — Diseño de tres pruebas E2E
+
+El repositorio no contiene una aplicación frontend ejecutable, así que estas pruebas
+se presentan como diseño funcional para una futura interfaz React. El objetivo es
+validar los flujos críticos desde el navegador, usando selectores estables
+`data-testid` y verificando el resultado visible para el usuario.
+
+| Prueba | Flujo | Datos de entrada | Resultado esperado |
+|---|---|---|---|
+| Crear pedido exitosamente | Abrir la pantalla de pedidos, diligenciar el formulario y seleccionar **Crear pedido**. | `customerId = CUS-E2E-01`, `total = 120000`. | La interfaz muestra confirmación, un id generado y estado `CREATED`; la respuesta HTTP subyacente es `201 Created`. |
+| Rechazar total inválido | Abrir el formulario, ingresar un total menor que 1 y enviarlo. | `customerId = CUS-E2E-INVALID`, `total = -10`. | La interfaz muestra un error de validación, no muestra un pedido creado y la API responde `400 Bad Request`; no se debe enviar una orden válida al servicio. |
+| Consultar pedido por id | Crear o seleccionar un pedido existente, copiar su id, abrir la consulta, ingresar el id y seleccionar **Consultar**. | `orderId` devuelto por la primera prueba, por ejemplo `ORD-...`. | La interfaz muestra el pedido correcto con el mismo id, `customerId` y estado `CREATED`; la API responde `200 OK`. |
+
+Flujo de automatización propuesto para los selectores: `[data-testid="customer-id"]`,
+`[data-testid="order-total"]`, `[data-testid="create-order"]`,
+`[data-testid="order-id"]`, `[data-testid="order-status"]`,
+`[data-testid="order-search-id"]` y `[data-testid="find-order"]`. La tercera prueba
+debe reutilizar el id capturado de la respuesta o de la interfaz, nunca un id fijo que
+pueda no existir en la base de datos.
+
+Como criterio adicional, cada prueba debe limpiar o aislar sus datos para no depender
+del orden de ejecución. Cuando exista el frontend real, se puede convertir este diseño
+en Playwright ejecutable y añadir un `webServer` para levantar frontend y API durante
+la prueba.
 
 ## Sección 9 — Pruebas de carga con k6
 
@@ -254,13 +274,15 @@ diferencia de las capas anteriores, aquí sí importa **cuántas** peticiones se
 disparan y en cuánto tiempo, no solo si la respuesta es correcta.
 
 - `load-tests/load-test.js`: carga simple y constante — 10 *usuarios virtuales*
-  (`vus`) durante 30s, haciendo `GET /orders/ORD-1` y verificando `status 200` y
-  `< 500ms` de respuesta.
+  (`vus`) durante 30s, haciendo `GET /orders/{id}` y verificando `status 200` y
+  `< 500ms` de respuesta. El id se recibe desde `ORDER_ID` y por defecto conserva
+  `ORD-1` para mantener compatibilidad con la guía.
 - `load-tests/load-test-stages.js`: carga variable por *stages* (rampa de 0→10 en
   20s, 10→30 en 30s, 30→0 en 20s) contra `POST /orders`, con **thresholds**: la
   prueba falla si la tasa de error supera 5% o si el p95 de latencia supera 800ms.
   `__VU` es el id del usuario virtual actual, usado para generar un `customerId`
-  distinto por usuario.
+  distinto por usuario. Ambos scripts aceptan `BASE_URL`; por defecto usan
+  `http://localhost:8080`.
 
 Para ejecutar, con la `order-api` corriendo en `localhost:8080`
 (`mvn spring-boot:run` desde `order-api/`):
@@ -273,13 +295,49 @@ docker run --rm -i grafana/k6 run - < load-test.js   # Docker, sin instalar nada
 
 # ejecutar
 cd load-tests
-k6 run load-test.js
+k6 run load-test.js --env ORDER_ID=ORD-<id-existente>
 k6 run load-test-stages.js
 ```
 
-> **Pendiente (Actividad 5 de la guía):** ejecutar una prueba de carga con k6 y
-> documentar usuarios virtuales, duración, total de solicitudes, porcentaje de
-> fallos, p95 de latencia, resultado de los thresholds y una conclusión técnica.
+Para obtener el id que necesita la prueba básica, primero se crea un pedido contra la
+API y se pasa el id devuelto a k6. En PowerShell:
+
+```powershell
+$order = Invoke-RestMethod -Method Post -Uri http://localhost:8080/orders `
+  -ContentType 'application/json' `
+  -Body '{"customerId":"CUS-LOAD-GET","total":120000}'
+k6 run load-test.js --env ORDER_ID=$order.id
+```
+
+### Actividad 5 — Ejecución y análisis
+
+La ejecución se realizó localmente contra Spring Boot, usando Java 21, Maven 3.9.12,
+H2 en memoria y k6 en Windows. La API debe permanecer levantada en
+`http://localhost:8080` durante las dos pruebas; no se requiere PostgreSQL, Docker,
+AWS ni un despliegue externo para este laboratorio. La carga se ejecuta desde un
+ambiente controlado y no se incorpora al pipeline de cada commit porque dura más y
+puede interferir con otros jobs; es candidata para una ejecución manual o previa a
+release.
+
+| Script | VUs | Duración/configuración | Solicitudes | Fallos | p95 | Thresholds | Resultado |
+|---|---:|---|---:|---:|---:|---|---|
+| `load-test.js` | 10 | 30 s constantes | 300 | 0.00% (0/300) | 18.11 ms | No configurados; checks 100%: HTTP 200 y < 500 ms | Exitoso |
+| `load-test-stages.js` | 0→10→30→0 (máx. 30) | 20 s + 30 s + 20 s = 70 s | 1004 | 0.00% (0/1004) | 9.87 ms | `http_req_failed < 5%`: aprobado; `http_req_duration p(95) < 800 ms`: aprobado | Exitoso |
+
+La cantidad de solicitudes y las métricas se completan directamente con el resumen
+emitido por k6 para cada ejecución. La conclusión debe considerar que este resultado
+es una línea base de una sola instancia local con H2 en memoria: sirve para detectar
+regresiones y comparar cambios, pero no representa la capacidad de producción. Para
+un ambiente desplegado, se puede usar `BASE_URL`, por ejemplo:
+`k6 run load-test-stages.js --env BASE_URL=https://api.example.com`.
+
+**Conclusión técnica de la ejecución:** la API respondió de forma estable en el
+ambiente local bajo las cargas evaluadas. La prueba constante procesó 300 solicitudes
+sin errores y la prueba por etapas procesó 1004 solicitudes sin superar los thresholds;
+en ambos casos el p95 quedó muy por debajo del límite configurado o, para la prueba
+básica, del check de 500 ms. Estos resultados no permiten afirmar capacidad de
+producción: faltan una base de datos externa, red entre servicios, autenticación,
+observabilidad y una prueba con una carga representativa del despliegue objetivo.
 
 ## Sección 10 — Estrategia de pruebas en CI/CD
 
@@ -305,7 +363,7 @@ sección de trabajo de una sola persona), por eso vive directamente en `develop`
 - [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (código base; falta Actividad 1)
 - [x] Sección 6 — Pruebas de API con MockMvc (código base; falta Actividad 2)
 - [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (falta Actividad 3)
-- [x] Sección 8 — Prueba E2E de ejemplo con Playwright (código base; falta Actividad 4; frontend real no implementado)
-- [x] Sección 9 — Scripts de carga con k6 (código base; falta Actividad 5: ejecutar y analizar)
+- [x] Sección 8 — Prueba E2E de ejemplo con Playwright (diseño de Actividad 4; frontend real no implementado)
+- [x] Sección 9 — Scripts de carga con k6 (scripts parametrizados y análisis de Actividad 5)
 - [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
 - [ ] Sección 11 — Actividad integradora y reto final
