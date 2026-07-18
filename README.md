@@ -37,6 +37,15 @@ Pruebas-ARSW/
 
 ## How to Run
 
+Clone the repository, check out this branch, and enter `order-api/`:
+
+```bash
+git clone https://github.com/JuanGuayazanC/Pruebas-ARSW.git
+cd Pruebas-ARSW
+git checkout develop
+cd order-api
+```
+
 From `order-api/`:
 
 ```bash
@@ -49,6 +58,10 @@ mvn spring-boot:run
 # run the tests
 mvn test
 ```
+
+> `frontend-tests/` (Playwright) and `load-tests/` (k6) are independent
+> subfolders with their own setup; both require the Order API running and are
+> documented in Sections 8 and 9.
 
 ## Central idea
 
