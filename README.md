@@ -32,6 +32,15 @@ Pruebas-ARSW/
 
 ## Cómo ejecutar
 
+Clona el repositorio, ubícate en esta rama y entra a `order-api/`:
+
+```bash
+git clone https://github.com/JuanGuayazanC/Pruebas-ARSW.git
+cd Pruebas-ARSW
+git checkout develop-es
+cd order-api
+```
+
 Desde `order-api/`:
 
 ```bash
@@ -44,6 +53,10 @@ mvn spring-boot:run
 # ejecutar las pruebas
 mvn test
 ```
+
+> `frontend-tests/` (Playwright) y `load-tests/` (k6) son subcarpetas independientes
+> con su propia configuración; ambas requieren la Order API en ejecución y están
+> documentadas en las secciones 8 y 9.
 
 ## Idea central
 
