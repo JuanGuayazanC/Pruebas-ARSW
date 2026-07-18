@@ -488,13 +488,4 @@ tests remain the best cost/benefit ratio for fast day-to-day iteration, but
 they're not the ones that protect the business most if only one type of test
 could be kept.
 
-## Lab progress
 
-- [x] Section 4 — Base Spring Boot project
-- [x] Section 5 — Unit tests with JUnit and Mockito (includes Activity 1)
-- [x] Section 6 — API tests with MockMvc (includes Activity 2)
-- [x] Section 7 — Integration tests + Testcontainers dependencies (includes Activity 3)
-- [x] Section 8 — Example E2E test with Playwright (Activity 4 design; no real frontend implemented)
-- [x] Section 9 — k6 load scripts (parameterized scripts + Activity 5 analysis)
-- [x] Section 10 — GitHub Actions pipeline for backend tests
-- [x] Section 11 — Integrative activity and final challenge
