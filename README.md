@@ -476,14 +476,3 @@ son las de mayor prioridad, seguidas de cerca por **E2E del checkout** — es el
 donde un bug le cuesta dinero real al negocio. Las unitarias siguen siendo las de mejor
 relación costo/beneficio para iterar rápido día a día, pero no son las que más protegen
 al negocio si solo se pudiera mantener un tipo de prueba.
-
-## Progreso del laboratorio
-
-- [x] Sección 4 — Proyecto base Spring Boot
-- [x] Sección 5 — Pruebas unitarias con JUnit y Mockito (incluye Actividad 1)
-- [x] Sección 6 — Pruebas de API con MockMvc (incluye Actividad 2)
-- [x] Sección 7 — Pruebas de integración + dependencias Testcontainers (incluye Actividad 3)
-- [x] Sección 8 — Prueba E2E de ejemplo con Playwright (diseño de Actividad 4; frontend real no implementado)
-- [x] Sección 9 — Scripts de carga con k6 (scripts parametrizados y análisis de Actividad 5)
-- [x] Sección 10 — Pipeline de GitHub Actions para pruebas de backend
-- [x] Sección 11 — Actividad integradora y reto final
